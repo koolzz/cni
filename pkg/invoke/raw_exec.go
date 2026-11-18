@@ -32,6 +32,10 @@ import (
 
 type RawExec struct {
 	Stderr io.Writer
+	// KillOnParentExit kills the plugin if its calling process exits on Linux.
+	// Other operating systems ignore this option. Leave it disabled for cleanup
+	// operations that must be allowed to outlive their caller.
+	KillOnParentExit bool
 }
 
 func (e *RawExec) ExecPlugin(ctx context.Context, pluginPath string, stdinData []byte, environ []string) ([]byte, error) {
@@ -49,7 +53,7 @@ func (e *RawExec) ExecPlugin(ctx context.Context, pluginPath string, stdinData [
 		c.Stdout = stdout
 		c.Stderr = stderr
 
-		err := c.Run()
+		err := runPlugin(c, e.KillOnParentExit)
 
 		// Command succeeded
 		if err == nil {
