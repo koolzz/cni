@@ -85,6 +85,25 @@ var _ = Describe("RawExec", func() {
 		Expect(resultBytes).To(BeEquivalentTo(reportResult))
 	})
 
+	Context("when plugin lifetime is bound to the caller", func() {
+		BeforeEach(func() {
+			execer.KillOnParentExit = true
+		})
+
+		It("still returns a normally completed plugin result", func() {
+			result, err := execer.ExecPlugin(ctx, pathToPlugin, stdin, environ)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result).To(BeEquivalentTo(reportResult))
+		})
+
+		It("still honors a canceled invocation context", func() {
+			ctx, cancel := context.WithCancel(ctx)
+			cancel()
+			_, err := execer.ExecPlugin(ctx, pathToPlugin, stdin, environ)
+			Expect(err).To(HaveOccurred())
+		})
+	})
+
 	Context("when the Stderr writer is set", func() {
 		var stderrBuffer *bytes.Buffer
 
